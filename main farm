@@ -2,26 +2,19 @@ local HttpService     = game:GetService("HttpService")
 local TweenService    = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 
-local SAVE_FILE = "kravix_key.json"
+local AUTO_EXEC_FILE = "kravix_autoexec.txt"
+local autoExecEnabled = true
+pcall(function()
+    if isfile(AUTO_EXEC_FILE) then
+        autoExecEnabled = readfile(AUTO_EXEC_FILE) ~= "false"
+    end
+end)
 
-local function loadSaved()
-    if not isfile(SAVE_FILE) then return nil end
-    local ok, data = pcall(function() return HttpService:JSONDecode(readfile(SAVE_FILE)) end)
-    return (ok and data) or nil
+if autoExecEnabled and queue_on_teleport then
+    queue_on_teleport("wait(7) loadstring(game:HttpGet('https://raw.githubusercontent.com/miyagisep/Farm/refs/heads/main/main%20farm'))()")
 end
 
-local function saveData(key, mode, askAgain)
-    writefile(SAVE_FILE, HttpService:JSONEncode({ key = key, mode = mode, savedAt = os.time(), askAgain = askAgain }))
-end
-
-local function isValid(data)
-    if not data or not data.key or data.key == "" then return false end
-    if data.mode == "lifetime" then return true end
-    if data.mode == "24h" then return (os.time() - (data.savedAt or 0)) < 86400 end
-    return false
-end
-
-local function runMain()
+do
 
 local KraviX = {}
 local TweenService = game:GetService("TweenService")
@@ -2634,47 +2627,11 @@ game:GetService("Players").LocalPlayer.OnTeleport:Connect(function(state)
     end
 end)
 
-local KeyTab = Window:CreateTab("Key")
-
-do
-    local _ks = loadSaved()
-    local _curMode = (_ks and _ks.mode) or "none"
-    local _curAsk  = (_ks and _ks.askAgain) or false
-    local _curKey  = (_ks and _ks.key) or ""
-
-    local keyStatusLabel = KeyTab:CreateLabel(_curKey ~= "" and ("Active Key: " .. _curKey) or "No key saved.")
-
-    KeyTab:CreateSelector("Save Mode", {"24h", "Lifetime", "Don't Save"},
-        _curMode == "lifetime" and 2 or (_curMode == "none" and 3 or 1),
-        function(choice)
-            _curMode = choice == "Lifetime" and "lifetime" or (choice == "Don't Save" and "none" or "24h")
-            if _curMode == "none" then
-                pcall(function() if isfile(SAVE_FILE) then delfile(SAVE_FILE) end end)
-                CreateNotification("Key", "Key cleared. UI will show on next execution.", 3)
-            else
-                if _curKey ~= "" then
-                    saveData(_curKey, _curMode, _curAsk)
-                    CreateNotification("Key", "Mode updated to " .. choice, 2)
-                end
-            end
-        end
-    )
-
-    KeyTab:CreateToggle("Ask Key on Next Execution", _curAsk, function(value)
-        _curAsk = value
-        if _curMode ~= "none" and _curKey ~= "" then
-            saveData(_curKey, _curMode, _curAsk)
-            CreateNotification("Key", value and "Will ask key next time." or "Will skip key UI next time.", 2)
-        end
-    end)
-
-    KeyTab:CreateButton("Clear Saved Key", function()
-        pcall(function() if isfile(SAVE_FILE) then delfile(SAVE_FILE) end end)
-        _curKey = ""; _curMode = "none"; _curAsk = false
-        keyStatusLabel:SetText("No key saved.")
-        CreateNotification("Key", "Key cleared! UI will show on next execution.", 3)
-    end)
-end
+SettingsTab:CreateToggle("Auto Execute Again", autoExecEnabled, function(value)
+    autoExecEnabled = value
+    pcall(function() writefile(AUTO_EXEC_FILE, tostring(value)) end)
+    CreateNotification("Auto Execute", value and "Will auto execute on rejoin!" or "Won't auto execute on rejoin.", 2)
+end)
 
 SettingsTab:CreateButton("Auto Drop Cash Script", function()
     CreateNotification("KraviX", "Stopping all functions and loading script...", 3)
@@ -2725,164 +2682,6 @@ SettingsTab:CreateButton("Auto Drop Cash Script", function()
 end)
 
 
-
-end 
-
-
-local saved = loadSaved()
-local _shouldSkipUI = isValid(saved) and not saved.askAgain
-if _shouldSkipUI then
-    getgenv().SCRIPT_KEY = saved.key
-    runMain()
-else
-    local _TS  = game:GetService("TweenService")
-    local _UIS = game:GetService("UserInputService")
-    local function _Tw(o,p,t) return _TS:Create(o, TweenInfo.new(t or 0.3, Enum.EasingStyle.Quint), p) end
-
-    local SG = Instance.new("ScreenGui")
-    SG.Name = "KraviXKeyGate"
-    SG.IgnoreGuiInset = true
-    SG.Parent = game.CoreGui
-
-    local Overlay = Instance.new("Frame", SG)
-    Overlay.Size = UDim2.new(1,0,1,0)
-    Overlay.BackgroundColor3 = Color3.fromRGB(0,0,0)
-    Overlay.BackgroundTransparency = 0.45
-    Overlay.BorderSizePixel = 0
-
-    local Main = Instance.new("Frame", SG)
-    Main.Size = UDim2.new(0,420,0,300)
-    Main.Position = UDim2.new(0.5,0,0.5,0)
-    Main.BackgroundColor3 = Color3.fromRGB(12,12,12)
-    Main.BorderSizePixel = 0
-    Instance.new("UICorner", Main).CornerRadius = UDim.new(0,8)
-    local Stroke = Instance.new("UIStroke", Main)
-    Stroke.Color = Color3.fromRGB(150,50,255); Stroke.Thickness = 1; Stroke.Transparency = 0.6
-
-    local TopBar = Instance.new("Frame", Main)
-    TopBar.Size = UDim2.new(1,0,0,45)
-    TopBar.BackgroundColor3 = Color3.fromRGB(15,15,15)
-    TopBar.BorderSizePixel = 0
-    Instance.new("UICorner", TopBar).CornerRadius = UDim.new(0,8)
-    local TopFix = Instance.new("Frame", TopBar)
-    TopFix.Size = UDim2.new(1,0,0,20); TopFix.Position = UDim2.new(0,0,1,-20)
-    TopFix.BackgroundColor3 = Color3.fromRGB(15,15,15); TopFix.BorderSizePixel = 0
-    local TitleLbl = Instance.new("TextLabel", TopBar)
-    TitleLbl.Size = UDim2.new(1,-20,1,0); TitleLbl.Position = UDim2.new(0,15,0,0)
-    TitleLbl.BackgroundTransparency = 1; TitleLbl.Text = "KRAVIX — Auto Save Key"
-    TitleLbl.TextColor3 = Color3.fromRGB(255,255,255); TitleLbl.TextSize = 14
-    TitleLbl.Font = Enum.Font.GothamBold; TitleLbl.TextXAlignment = Enum.TextXAlignment.Left
-
-    local Body = Instance.new("Frame", Main)
-    Body.Size = UDim2.new(1,-30,1,-60); Body.Position = UDim2.new(0,15,0,55)
-    Body.BackgroundTransparency = 1
-
-    local Desc = Instance.new("TextLabel", Body)
-    Desc.Size = UDim2.new(1,0,0,20); Desc.BackgroundTransparency = 1
-    Desc.Text = "Enter your Jnkie key to continue:"
-    Desc.TextColor3 = Color3.fromRGB(160,160,160); Desc.TextSize = 12
-    Desc.Font = Enum.Font.Gotham; Desc.TextXAlignment = Enum.TextXAlignment.Left
-
-    local InputFrame = Instance.new("Frame", Body)
-    InputFrame.Size = UDim2.new(1,0,0,36); InputFrame.Position = UDim2.new(0,0,0,28)
-    InputFrame.BackgroundColor3 = Color3.fromRGB(18,18,18)
-    Instance.new("UICorner", InputFrame).CornerRadius = UDim.new(0,6)
-    local IS = Instance.new("UIStroke", InputFrame)
-    IS.Color = Color3.fromRGB(150,50,255); IS.Thickness = 1; IS.Transparency = 0.8
-    local KeyInput = Instance.new("TextBox", InputFrame)
-    KeyInput.Size = UDim2.new(1,-16,1,0); KeyInput.Position = UDim2.new(0,8,0,0)
-    KeyInput.BackgroundTransparency = 1
-    KeyInput.PlaceholderText = "Paste your key here..."
-    KeyInput.PlaceholderColor3 = Color3.fromRGB(80,80,80)
-    KeyInput.Text = (saved and saved.key) or ""
-    KeyInput.TextColor3 = Color3.fromRGB(255,255,255); KeyInput.TextSize = 12
-    KeyInput.Font = Enum.Font.Gotham; KeyInput.TextXAlignment = Enum.TextXAlignment.Left
-    KeyInput.ClearTextOnFocus = false
-
-    local SaveLabel = Instance.new("TextLabel", Body)
-    SaveLabel.Size = UDim2.new(1,0,0,16); SaveLabel.Position = UDim2.new(0,0,0,76)
-    SaveLabel.BackgroundTransparency = 1; SaveLabel.Text = "Save key for:"
-    SaveLabel.TextColor3 = Color3.fromRGB(160,160,160); SaveLabel.TextSize = 12
-    SaveLabel.Font = Enum.Font.Gotham; SaveLabel.TextXAlignment = Enum.TextXAlignment.Left
-
-    local saveMode = (saved and saved.mode) or "24h"
-    local function makeBtn(label, xOff, mode)
-        local B = Instance.new("TextButton", Body)
-        B.Size = UDim2.new(0,110,0,30); B.Position = UDim2.new(0,xOff,0,98)
-        B.BackgroundColor3 = saveMode == mode and Color3.fromRGB(150,50,255) or Color3.fromRGB(22,22,22)
-        B.Text = label; B.TextColor3 = Color3.fromRGB(255,255,255)
-        B.TextSize = 12; B.Font = Enum.Font.GothamSemibold; B.AutoButtonColor = false
-        Instance.new("UICorner", B).CornerRadius = UDim.new(0,6)
-        return B
-    end
-    local Btn24h      = makeBtn("24 Hours",   0,   "24h")
-    local BtnLifetime = makeBtn("Lifetime",   118, "lifetime")
-    local BtnNoSave   = makeBtn("Don't Save", 236, "none")
-    local modeBtns = { {Btn24h, "24h"}, {BtnLifetime, "lifetime"}, {BtnNoSave, "none"} }
-    local function updateBtns()
-        for _, v in ipairs(modeBtns) do
-            _Tw(v[1], {BackgroundColor3 = saveMode == v[2] and Color3.fromRGB(150,50,255) or Color3.fromRGB(22,22,22)}, 0.15):Play()
-        end
-    end
-    Btn24h.MouseButton1Click:Connect(function()      saveMode = "24h";      updateBtns() end)
-    BtnLifetime.MouseButton1Click:Connect(function()  saveMode = "lifetime"; updateBtns() end)
-    BtnNoSave.MouseButton1Click:Connect(function()    saveMode = "none";     updateBtns() end)
-
-    local askAgain = (saved and saved.askAgain) or false
-    local ToggleRow = Instance.new("Frame", Body)
-    ToggleRow.Size = UDim2.new(1,0,0,24); ToggleRow.Position = UDim2.new(0,0,0,140)
-    ToggleRow.BackgroundTransparency = 1
-    local AskLbl = Instance.new("TextLabel", ToggleRow)
-    AskLbl.Size = UDim2.new(1,-55,1,0); AskLbl.BackgroundTransparency = 1
-    AskLbl.Text = "Ask again on next execution?"
-    AskLbl.TextColor3 = Color3.fromRGB(160,160,160); AskLbl.TextSize = 12
-    AskLbl.Font = Enum.Font.Gotham; AskLbl.TextXAlignment = Enum.TextXAlignment.Left
-    local TBtn = Instance.new("TextButton", ToggleRow)
-    TBtn.Size = UDim2.new(0,40,0,20); TBtn.Position = UDim2.new(1,-40,0.5,-10)
-    TBtn.BackgroundColor3 = askAgain and Color3.fromRGB(150,50,255) or Color3.fromRGB(30,30,30)
-    TBtn.Text = ""; TBtn.AutoButtonColor = false
-    Instance.new("UICorner", TBtn).CornerRadius = UDim.new(1,0)
-    local Circle = Instance.new("Frame", TBtn)
-    Circle.Size = UDim2.new(0,14,0,14)
-    Circle.Position = askAgain and UDim2.new(1,-17,0.5,-7) or UDim2.new(0,3,0.5,-7)
-    Circle.BackgroundColor3 = Color3.fromRGB(255,255,255)
-    Instance.new("UICorner", Circle).CornerRadius = UDim.new(1,0)
-    TBtn.MouseButton1Click:Connect(function()
-        askAgain = not askAgain
-        _Tw(TBtn, {BackgroundColor3 = askAgain and Color3.fromRGB(150,50,255) or Color3.fromRGB(30,30,30)}, 0.15):Play()
-        _Tw(Circle, {Position = askAgain and UDim2.new(1,-17,0.5,-7) or UDim2.new(0,3,0.5,-7)}, 0.15):Play()
-    end)
-
-    local StatusLbl = Instance.new("TextLabel", Body)
-    StatusLbl.Size = UDim2.new(1,0,0,16); StatusLbl.Position = UDim2.new(0,0,0,172)
-    StatusLbl.BackgroundTransparency = 1; StatusLbl.Text = ""
-    StatusLbl.TextColor3 = Color3.fromRGB(255,80,80); StatusLbl.TextSize = 11
-    StatusLbl.Font = Enum.Font.Gotham; StatusLbl.TextXAlignment = Enum.TextXAlignment.Left
-
-    local ExecBtn = Instance.new("TextButton", Body)
-    ExecBtn.Size = UDim2.new(1,0,0,36); ExecBtn.Position = UDim2.new(0,0,0,196)
-    ExecBtn.BackgroundColor3 = Color3.fromRGB(150,50,255)
-    ExecBtn.Text = "Execute Script"; ExecBtn.TextColor3 = Color3.fromRGB(255,255,255)
-    ExecBtn.TextSize = 13; ExecBtn.Font = Enum.Font.GothamBold; ExecBtn.AutoButtonColor = false
-    Instance.new("UICorner", ExecBtn).CornerRadius = UDim.new(0,6)
-    ExecBtn.MouseEnter:Connect(function() _Tw(ExecBtn, {BackgroundColor3 = Color3.fromRGB(170,70,255)}, 0.15):Play() end)
-    ExecBtn.MouseLeave:Connect(function() _Tw(ExecBtn, {BackgroundColor3 = Color3.fromRGB(150,50,255)}, 0.15):Play() end)
-
-    ExecBtn.MouseButton1Click:Connect(function()
-        local key = KeyInput.Text:match("^%s*(.-)%s*$")
-        if key == "" and saveMode ~= "none" then StatusLbl.Text = "⚠ Please enter your key."; return end
-        ExecBtn.Text = "Loading..."; StatusLbl.Text = ""
-        if saveMode == "none" then
-            pcall(function() if isfile(SAVE_FILE) then delfile(SAVE_FILE) end end)
-        else
-            saveData(key, saveMode, askAgain)
-        end
-        SG:Destroy()
-        getgenv().SCRIPT_KEY = key
-        runMain()
-    end)
-
-    _Tw(Main, {Size = UDim2.new(0,420,0,300), Position = UDim2.new(0.5,-210,0.5,-150)}, 0.35):Play()
 end
 
--- by KraviX Team: Anni, Makarov e sixsdev 👑 -- 2
+-- by KraviX Team: Anni, Makarov e sixsdev 👑
