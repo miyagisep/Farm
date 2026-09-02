@@ -4,14 +4,21 @@ local UserInputService = game:GetService("UserInputService")
 
 local AUTO_EXEC_FILE = "kravix_autoexec.txt"
 local autoExecEnabled = true
+pcall(function() writefile(AUTO_EXEC_FILE, "true") end)
+
+if queue_on_teleport then
+    queue_on_teleport([[
+local AUTO_EXEC_FILE = "kravix_autoexec.txt"
+local enabled = false
 pcall(function()
     if isfile(AUTO_EXEC_FILE) then
-        autoExecEnabled = readfile(AUTO_EXEC_FILE) == "true"
+        enabled = readfile(AUTO_EXEC_FILE) == "true"
     end
 end)
-
-if autoExecEnabled and queue_on_teleport then
-    queue_on_teleport("loadstring(game:HttpGet('https://raw.githubusercontent.com/miyagisep/Farm/refs/heads/main/main%20farm'))()")
+if enabled then
+    loadstring(game:HttpGet('https://raw.githubusercontent.com/miyagisep/Farm/refs/heads/main/main%20farm'))()
+end
+]])
 end
 
 do
