@@ -2631,21 +2631,6 @@ game:GetService("Players").LocalPlayer.OnTeleport:Connect(function(state)
             local earned = math.max(0, currentCash - initialCash)
             sendWebhook("Kicked / Teleported", string.format("**Wallet:** $%s | **Earned:** $%s", tostring(currentCash), tostring(earned)), 16711680)
         end
-        pcall(function()
-            if queue_on_teleport then
-                local key = getgenv().SCRIPT_KEY or ""
-                if key ~= "" then
-                    
-                    queue_on_teleport = nil
-                    queue_on_teleport = function(code) end
-                    local script_code = string.format(
-                        'task.wait(7) getgenv().SCRIPT_KEY = "%s" loadstring(game:HttpGet("https://api.jnkie.com/api/v1/luascripts/public/f7eeb18449d58d70f85bb40693bfb93323e041ea4c09d9e72d8203e37ad894bf/download"))()',
-                        key
-                    )
-                    queue_on_teleport(script_code)
-                end
-            end
-        end)
     end
 end)
 
@@ -2900,4 +2885,4 @@ else
     _Tw(Main, {Size = UDim2.new(0,420,0,300), Position = UDim2.new(0.5,-210,0.5,-150)}, 0.35):Play()
 end
 
--- by KraviX Team: Anni, Makarov e sixsdev 👑
+-- by KraviX Team: Anni, Makarov e sixsdev 👑 -- 2
