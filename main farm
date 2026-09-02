@@ -7,24 +7,11 @@ local autoExecEnabled = true
 pcall(function()
     if isfile(AUTO_EXEC_FILE) then
         autoExecEnabled = readfile(AUTO_EXEC_FILE) == "true"
-    else
-        writefile(AUTO_EXEC_FILE, "true")
     end
 end)
 
-if queue_on_teleport then
-    queue_on_teleport([[
-local AUTO_EXEC_FILE = "kravix_autoexec.txt"
-local enabled = false
-pcall(function()
-    if isfile(AUTO_EXEC_FILE) then
-        enabled = readfile(AUTO_EXEC_FILE) == "true"
-    end
-end)
-if enabled then
-    loadstring(game:HttpGet('https://raw.githubusercontent.com/miyagisep/Farm/refs/heads/main/main%20farm'))()
-end
-]])
+if autoExecEnabled and queue_on_teleport then
+    queue_on_teleport("loadstring(game:HttpGet('https://raw.githubusercontent.com/miyagisep/Farm/refs/heads/main/main%20farm'))()")
 end
 
 do
@@ -2640,7 +2627,7 @@ game:GetService("Players").LocalPlayer.OnTeleport:Connect(function(state)
     end
 end)
 
-SettingsTab:CreateToggle("Auto Execute Again", autoExecEnabled, function(value)
+SettingsTab:CreateToggle("Auto Execute Again", true, function(value)
     autoExecEnabled = value
     pcall(function() writefile(AUTO_EXEC_FILE, tostring(value)) end)
     CreateNotification("Auto Execute", value and "Will auto execute on rejoin!" or "Won't auto execute on rejoin.", 2)
