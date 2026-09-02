@@ -6,7 +6,9 @@ local AUTO_EXEC_FILE = "kravix_autoexec.txt"
 local autoExecEnabled = true
 pcall(function()
     if isfile(AUTO_EXEC_FILE) then
-        autoExecEnabled = readfile(AUTO_EXEC_FILE) ~= "false"
+        autoExecEnabled = readfile(AUTO_EXEC_FILE) == "true"
+    else
+        writefile(AUTO_EXEC_FILE, "true")
     end
 end)
 
