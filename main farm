@@ -11,7 +11,7 @@ pcall(function()
 end)
 
 if autoExecEnabled and queue_on_teleport then
-    queue_on_teleport("wait(7) loadstring(game:HttpGet('https://raw.githubusercontent.com/miyagisep/Farm/refs/heads/main/main%20farm'))()")
+    queue_on_teleport("loadstring(game:HttpGet('https://raw.githubusercontent.com/miyagisep/Farm/refs/heads/main/main%20farm'))()")
 end
 
 do
@@ -198,7 +198,7 @@ function KraviX:CreateWindow(config)
         LoadingFill.Size = UDim2.new(i / 100, 0, 1, 0)
         LoadingPercent.Text = i .. "%"
         if i % 25 == 0 then LoadingText.Text = messages[math.floor(i / 25)] or "Loading..." end
-        task.wait(0.015)
+        task.wait(0.07)
     end
 
     task.wait(0.3)
